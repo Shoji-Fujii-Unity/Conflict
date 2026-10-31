@@ -21,14 +21,16 @@ console.log('IDs referenced:',referenced.size,'defined:',defined.size,missingIds
 /* ---- stubs ---- */
 const requested=new Set();
 function makeEl(id){
- const el={id,style:{},dataset:{},children:[],_cls:new Set(),textContent:'',innerHTML:'',offsetLeft:0,offsetTop:0,
+ const el={id,style:{},dataset:{},children:[],_cls:new Set(),textContent:'',_innerHTML:'',_htmlWrites:0,offsetLeft:0,offsetTop:0,
+  get innerHTML(){return this._innerHTML;},
+  set innerHTML(value){this._innerHTML=value;this._htmlWrites++;},
   classList:{add:c=>el._cls.add(c),remove:c=>el._cls.delete(c),contains:c=>el._cls.has(c),
    toggle:(c,f)=>{ if(f===undefined){ if(el._cls.has(c))el._cls.delete(c);else el._cls.add(c); } else if(f)el._cls.add(c); else el._cls.delete(c); }},
-  addEventListener(){},removeEventListener(){},
+  addEventListener(){},removeEventListener(){},setAttribute(name,value){el[name]=String(value);},
   appendChild(c){el.children.push(c);return c},
   removeChild(c){const i=el.children.indexOf(c);if(i>=0)el.children.splice(i,1);return c},
   get firstChild(){return el.children[0]||null},
-  querySelectorAll(){return[]},closest(){return null},remove(){},};
+  querySelectorAll(){return[]},querySelector(){return null},closest(){return null},remove(){},};
  return el;
 }
 const els={};
@@ -65,7 +67,7 @@ sandbox.window.addEventListener=()=>{};
 sandbox.window.AudioContext=undefined;sandbox.window.webkitAudioContext=undefined;
 
 /* expose internals for the test */
-src+='\nwindow.__X={getG:()=>G,setG:v=>{G=v;},getSAVE:()=>SAVE,startGame,showScreen,updatePanel,updateHud,applyLabels,goalText,renderStages,toast,resize,doTap,issueCommand,selWorkers,hoverEnt,LEVELS,I18N,t,U,B,Game,saveNow};';
+src+='\nwindow.__X={getG:()=>G,setG:v=>{G=v;},getSAVE:()=>SAVE,startGame,showScreen,updatePanel,refreshPanel,updateHud,applyLabels,goalText,renderStages,toast,resize,doTap,issueCommand,selWorkers,hoverEnt,selectInBox,setPlacement,LEVELS,I18N,t,U,B,Game,saveNow};';
 
 /* ---- run ---- */
 let errors=[];
@@ -221,6 +223,30 @@ try{
  let pf2=false;
  for(const [ox,oy] of [[-100,-90],[-130,-60],[130,80],[90,-110],[0,140]]){ if(g.placePlayer('farm',tc.x+ox,tc.y+oy)){ pf2=true; break; } }
  console.log('placePlayer on TC (expect false): '+g.placePlayer('farm',tc.x,tc.y)+' | free spot any-ok: '+pf2);
+ X.startGame(3);
+ const pg=X.getG(),ptc=pg.buildings.find(b=>b.team===0&&b.type==='tc');
+ pg.sel=[ptc]; pg.gold[0]=10000; X.updatePanel();
+ X.setPlacement('farm');
+ if(!els.panel.innerHTML.includes('place_hint')&&!els.panel.innerHTML.includes(X.t('place_hint'))) errors.push('placement instructions missing from selected Stronghold panel');
+ const panelWrites=els.panel._htmlWrites;
+ X.refreshPanel();
+ if(els.panel._htmlWrites!==panelWrites) errors.push('periodic panel refresh replaced active controls');
+ let placedByTap=false;
+ for(let y=ptc.y-260;y<=ptc.y+260&&!placedByTap;y+=56) for(let x=ptc.x-300;x<=ptc.x+300&&!placedByTap;x+=56){
+  if(!pg.placeOK(x,y,'farm')) continue;
+  const before=pg.buildings.length;
+  X.doTap(x,y);
+  placedByTap=pg.buildings.length>before&&!pg.placeT;
+ }
+ if(!placedByTap) errors.push('tap placement did not place a building and exit placement mode');
+ if(documentStub.body.classList.contains('placing')) errors.push('placement cursor state remained active after successful placement');
+ console.log('shared touch/desktop placement flow: '+(placedByTap?'OK':'FAIL'));
+ const friendly=pg.units.filter(u=>u.team===0),minX=Math.min(...friendly.map(u=>u.x)),maxX=Math.max(...friendly.map(u=>u.x));
+ const minY=Math.min(...friendly.map(u=>u.y)),maxY=Math.max(...friendly.map(u=>u.y));
+ pg.zoom=1; pg.cam={x:minX-1,y:minY-1};
+ X.selectInBox(0,0,maxX-minX+2,maxY-minY+2);
+ if(pg.sel.length!==friendly.length) errors.push('screen-space box selection did not select all enclosed friendly units');
+ console.log('box-selection helper: '+(pg.sel.length===friendly.length?'OK':'FAIL'));
  // stance + stop + autog toggle
  g.sel=g.units.filter(u=>u.team===0&&X.U[u.type].military);
  g.setStance(g.sel,'aggro'); g.orderStop(g.sel);
@@ -234,21 +260,49 @@ try{
  console.log('interaction smoke: OK');
 }catch(e){ errors.push('interaction: '+e.message+'\n'+e.stack); }
 
-/* win flow: wipe team1 on level 1, verify stars + save progression + result screen */
+/* destroying all enemy strongholds wins; losing all player strongholds loses */
+try{
+ X.startGame(5);
+ const multi=X.getG();
+ const enemyTCs=multi.buildings.filter(b=>b.team===1&&b.type==='tc');
+ if(enemyTCs.length<2) errors.push('multi-Stronghold test level did not create multiple enemy Strongholds');
+ enemyTCs[0].dead=true;
+ multi.buildings=multi.buildings.filter(b=>!b.dead);
+ multi.checkEnd();
+ if(multi.over) errors.push('one of multiple enemy Strongholds triggered an early win');
+ for(const b of multi.buildings) if(b.team===1&&b.type==='tc') b.dead=true;
+ multi.buildings=multi.buildings.filter(b=>!b.dead);
+ multi.checkEnd();
+ if(!multi.over||!multi.overRes.win||multi.overRes.reason!=='tc') errors.push('destroying all enemy Strongholds did not win: '+JSON.stringify(multi.overRes));
+ console.log('multiple Strongholds: last enemy Stronghold triggers win');
+
+ X.startGame(1);
+ const loss=X.getG(),playerTC=loss.buildings.find(b=>b.team===0&&b.type==='tc');
+ playerTC.dead=true;
+ loss.buildings=loss.buildings.filter(b=>!b.dead);
+ loss.checkEnd();
+ if(!loss.over||loss.overRes.win||loss.overRes.reason!=='tc') errors.push('destroying player Stronghold did not trigger defeat: '+JSON.stringify(loss.overRes));
+ if(!els.resmask.classList.contains('show')||els.rTitle.textContent!==X.t('res_lose')) errors.push('defeat result UI did not appear correctly');
+ if(!els.rRetry.textContent||!els.rStages.textContent||!els.rNext.textContent) errors.push('result screen action buttons are missing labels');
+ console.log('player Stronghold destruction: defeat result UI shown');
+}catch(e){ errors.push('Stronghold destruction flow: '+e.message+'\n'+e.stack); }
+
+/* win flow: destroy enemy Strongholds while enemy units remain */
 try{
  const u0=X.getSAVE().unlocked;
- X.startGame(1);
+ X.startGame(5);
  const wg=X.getG();
- for(const b of wg.buildings) if(b.team===1) b.dead=true;
- for(const u of wg.units) if(u.team===1) u.dead=true;
+ for(const b of wg.buildings) if(b.team===1&&b.type==='tc') b.dead=true;
  wg.buildings=wg.buildings.filter(b=>!b.dead); wg.units=wg.units.filter(u=>!u.dead);
  wg.checkEnd();
- if(!wg.over||!wg.overRes||!wg.overRes.win){ errors.push('forced win not registered: '+JSON.stringify(wg.overRes)); }
+ if(!wg.over||!wg.overRes||!wg.overRes.win||wg.overRes.reason!=='tc'){ errors.push('Stronghold win not registered: '+JSON.stringify(wg.overRes)); }
  else{
-  const s=X.getSAVE().stages['1'];
+  if(!wg.units.some(u=>u.team===1)) errors.push('Stronghold win test requires surviving enemy units');
+  if(!els.resmask.classList.contains('show')||els.rTitle.textContent!==X.t('res_win')) errors.push('victory result UI did not appear correctly');
+  const s=X.getSAVE().stages['5'];
   console.log('win flow: stars='+wg.overRes.stars+' save.stars='+s.stars+' best='+s.best+' unlocked '+u0+'->'+X.getSAVE().unlocked);
   if(!(s.stars>=1)) errors.push('stars not saved');
-  if(X.getSAVE().unlocked<2) errors.push('unlocked did not advance after win');
+  if(X.getSAVE().unlocked<6) errors.push('unlocked did not advance after win');
   wg.render();
  }
 }catch(e){ errors.push('winflow: '+e.message+'\n'+e.stack); }

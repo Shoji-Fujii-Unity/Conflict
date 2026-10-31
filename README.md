@@ -4,7 +4,7 @@
 
 > **Conflict ― 層塔の戦線** — ポケットRTS / a pocket RTS / 掌上即时战略 / 掌上即時戰略
 
-HTML1ファイルだけで動く、ブラウザのリアルタイムストラテジー。16ステージ・4言語・スマホ横画面対応・ローカルセーブ。
+HTML1ファイルだけで動く、ブラウザのリアルタイムストラテジー。16ステージ・4言語・スマホ縦/横画面対応・ローカルセーブ。
 `index.html` をダブルクリックするだけで遊べます(サーバー不要・オフライン可)。
 
 ---
@@ -27,15 +27,16 @@ HTML1ファイルだけで動く、ブラウザのリアルタイムストラテ
 
 ### 遊び方
 
-1. `index.html` をブラウザで開く(スマートフォンは**横画面**推奨)
+1. `index.html` をブラウザで開く(スマートフォンは**横画面**推奨、縦画面にも対応)
 2. 「ゲーム開始」→ ステージを選んでクリック/タップ
 3. 本城(★)を中心に、左下ヒントに従って開拓 → 編成 → 攻略
 
 ### ステージと目標(全16ステージ)
 
-- ⚔ **全殲滅** — 敵の建物とユニットをすべて撃破
-- 🛡 **防衛** — 制限時間まで持ちこたえる
+- ⚔ **全殲滅** — 敵本城をすべて破壊するか、敵の建物とユニットをすべて撃破
+- 🛡 **防衛** — 制限時間まで持ちこたえる(敵本城をすべて破壊した場合は即クリア)
 - ⏳ **本城破壊** — 制限時間以内に敵の本城を壊す
+- **勝敗** — 自軍の本城がすべて破壊されると敗北。敵本城が複数ある場合は、すべて破壊するとクリア。
 
 クリア時間に応じて ★×3 まで評価。後続ステージが順に解禁され、各ステージのベスト記録が保存されます。
 難易度は **イージー / ノーマル / ハード**(タイトル画面・ポーズ画面で変更)。
@@ -86,7 +87,8 @@ HTML1ファイルだけで動く、ブラウザのリアルタイムストラテ
 - `H` 攻勢スタンス、`G` 防御スタンス、`S` 停止、`A` 攻撃移動(→目的地をクリック)
 
 **タッチ(スマホ・タブレット)**
-- 1本指ドラッグで視点移動、ピンチでズーム
+- 通常は1本指ドラッグで視点移動、ピンチでズーム
+- HUDの「範囲」ボタンをオンにしてマップをドラッグすると、自軍ユニットを範囲選択
 - タップで選択。選んだ後にタップ = 地面へ移動 / 敵へ攻撃 / 金鉱で採掘 / 建設中建物へ建設手伝い / 傷んだ建物へ修理
 - 同じ兵種をダブルタップで同種一括選択
 - 生産・建設は画面下のパネルから
@@ -130,15 +132,16 @@ No install, no network — progress is saved to browser localStorage.
 
 ### How to play
 
-1. Open `index.html` in a browser (**landscape** recommended on phones)
+1. Open `index.html` in a browser (**landscape** recommended on phones; portrait is supported)
 2. Press *Start* → pick a stage card
 3. Follow the on-screen hints: expand economy → build an army → take the objective
 
 ### Levels & objectives (16 levels)
 
-- ⚔ **Annihilate** — destroy every enemy building and unit
-- 🛡 **Defend** — hold out until the timer ends
+- ⚔ **Annihilate** — destroy every enemy Stronghold or eliminate all enemy buildings and units
+- 🛡 **Defend** — hold out until the timer ends (destroying every enemy Stronghold wins immediately)
 - ⏳ **Destroy** — wreck the enemy Stronghold before time runs out
+- **Victory / defeat** — losing all player Strongholds means defeat. If there are multiple enemy Strongholds, destroy all of them to win.
 
 Clears are rated up to ★★★ by time; stages unlock in order and best times are saved.
 Difficulty: **Easy / Normal / Hard** (title or pause screen).
@@ -190,6 +193,7 @@ Idle workers automatically rush to construct new buildings; finished ones can be
 
 **Touch (phone / tablet)**
 - One-finger drag to pan, pinch to zoom
+- Turn on the HUD's **Box** button, then drag on the map to select your units
 - Tap to select; then tap to move / attack / mine / help build / repair
 - Double-tap a unit to select all of the same type
 - Training & construction live in the bottom panel
@@ -233,15 +237,16 @@ Latest Chrome / Edge / Firefox / Safari (incl. iOS Safari & Android Chrome). Wor
 
 ### 开始游玩
 
-1. 用浏览器打开 `index.html`(手机建议**横屏**)
+1. 用浏览器打开 `index.html`(手机建议**横屏**,也支持竖屏)
 2. 点击「开始游戏」→ 选择关卡卡片
 3. 跟随屏幕提示:发展经济 → 组建军队 → 完成目标
 
 ### 关卡与目标(共16关)
 
-- ⚔ **全歼灭** — 摧毁敌方所有建筑与单位
-- 🛡 **防守** — 坚持到倒计时结束
+- ⚔ **全歼灭** — 摧毁所有敌方主城,或击败敌方所有建筑与单位
+- 🛡 **防守** — 坚持到倒计时结束(摧毁所有敌方主城会立即获胜)
 - ⏳ **摧毁主城** — 在时限内击毁敌方主城
+- **胜负** — 我方所有主城被摧毁时失败;敌方有多个主城时,需全部摧毁才能获胜。
 
 按通关时间最高评 ★★★;关卡依次解锁,最佳成绩自动保存。
 难度分为 **简单 / 普通 / 困难**(标题页或暂停页切换)。
@@ -293,6 +298,7 @@ Latest Chrome / Edge / Firefox / Safari (incl. iOS Safari & Android Chrome). Wor
 
 **触屏(手机 / 平板)**
 - 单指拖动平移,双指捏合缩放
+- 点击HUD中的“框选”按钮后,拖动地图即可框选我方单位
 - 点击选择;选中后点击 = 移动 / 攻击 / 采矿 / 协助建造 / 修理
 - 双击同兵种可一键全选同种
 - 生产与建造均在底部面板
@@ -336,15 +342,16 @@ Chrome / Edge / Firefox / Safari 最新版(含 iOS Safari 与 Android Chrome)。
 
 ### 開始遊玩
 
-1. 用瀏覽器開啟 `index.html`(手機建議**橫屏**)
+1. 用瀏覽器開啟 `index.html`(手機建議**橫屏**,也支援直向畫面)
 2. 點擊「開始遊戲」→ 選擇關卡卡片
 3. 跟隨螢幕提示:發展經濟 → 組建軍隊 → 完成目標
 
 ### 關卡與目標(共16關)
 
-- ⚔ **全殲滅** — 摧毀敵方所有建築與單位
-- 🛡 **防守** — 堅持到倒數計時結束
+- ⚔ **全殲滅** — 摧毀所有敵方主城,或擊敗敵方所有建築與單位
+- 🛡 **防守** — 堅持到倒數計時結束(摧毀所有敵方主城會立即獲勝)
 - ⏳ **摧毀主城** — 在時限內擊毀敵方主城
+- **勝負** — 我方所有主城被摧毀時失敗;敵方有多座主城時,需全部摧毀才能獲勝。
 
 依通關時間最高評 ★★★;關卡依次解鎖,最佳成績自動儲存。
 難度分為 **簡單 / 普通 / 困難**(標題頁或暫停頁切換)。
@@ -396,6 +403,7 @@ Chrome / Edge / Firefox / Safari 最新版(含 iOS Safari 与 Android Chrome)。
 
 **觸控(手機 / 平板)**
 - 單指拖曳平移,雙指捏合縮放
+- 開啟HUD中的「框選」按鈕後,拖曳地圖即可框選我方單位
 - 點擊選取;選取後點擊 = 移動 / 攻擊 / 開採 / 協助建造 / 修理
 - 雙擊同兵種可一鍵全選同種
 - 生產與建造均在底部面板
