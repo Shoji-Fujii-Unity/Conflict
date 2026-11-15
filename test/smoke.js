@@ -43,11 +43,13 @@ const documentStub={
  addEventListener(){},hidden:false,
 };
 const transforms=[];
+const cvListeners={};
+const windowListeners={};
 const ctxStub=new Proxy({
  createLinearGradient(){return {addColorStop(){}};},
  setTransform(...args){transforms.push(args);},
 },{get(t,p){ if(typeof p==='symbol')return undefined; if(!(p in t)) t[p]=(...a)=>{}; return t[p]; },set(t,p,v){t[p]=v;return true;}});
-const cvStub={width:0,height:0,style:{},getContext:()=>ctxStub,addEventListener(){},offsetLeft:0,offsetTop:0};
+const cvStub={width:0,height:0,style:{},getContext:()=>ctxStub,addEventListener(name,fn){cvListeners[name]=fn;},offsetLeft:0,offsetTop:0};
 els['cv']=cvStub;
 const store={};
 const sandbox={
@@ -63,7 +65,7 @@ sandbox.window=sandbox;
 sandbox.globalThis=sandbox;
 sandbox.document=documentStub;
 sandbox.window.innerWidth=900;sandbox.window.innerHeight=520;sandbox.window.devicePixelRatio=1;
-sandbox.window.addEventListener=()=>{};
+sandbox.window.addEventListener=(name,fn)=>{windowListeners[name]=fn;};
 sandbox.window.AudioContext=undefined;sandbox.window.webkitAudioContext=undefined;
 
 /* expose internals for the test */
@@ -241,6 +243,24 @@ try{
  if(!placedByTap) errors.push('tap placement did not place a building and exit placement mode');
  if(documentStub.body.classList.contains('placing')) errors.push('placement cursor state remained active after successful placement');
  console.log('shared touch/desktop placement flow: '+(placedByTap?'OK':'FAIL'));
+ const mapGame=pg;
+ mapGame.vw=400; mapGame.vh=300; mapGame.zoom=1;
+ mapGame.mm={x:700,y:30,w:160,h:100}; mapGame.cam={x:280,y:170};
+ els.panel.classList.remove('show');
+ const mapPoint=(fx,fy)=>({x:mapGame.mm.x+mapGame.mm.w*fx,y:mapGame.mm.y+mapGame.mm.h*fy});
+ let mapOk=true;
+ let mp=mapPoint(0.75,0.6);
+ cvListeners.pointerdown({clientX:mp.x,clientY:mp.y,pointerId:31,pointerType:'mouse',button:0});
+ windowListeners.pointerup({clientX:mp.x,clientY:mp.y,pointerId:31,type:'pointerup'});
+ if(Math.abs(mapGame.cam.x+mapGame.vw/2-mapGame.W*0.75)>1||Math.abs(mapGame.cam.y+mapGame.vh/2-mapGame.H*0.6)>1){ errors.push('minimap click did not center on the selected world position'); mapOk=false; }
+ mapGame.cam={x:180,y:120};
+ mp=mapPoint(0.2,0.2);
+ cvListeners.pointerdown({clientX:mp.x,clientY:mp.y,pointerId:32,pointerType:'mouse',button:0});
+ const dragTo=mapPoint(0.7,0.65);
+ windowListeners.pointermove({clientX:dragTo.x,clientY:dragTo.y,pointerId:32,pointerType:'mouse'});
+ windowListeners.pointerup({clientX:dragTo.x,clientY:dragTo.y,pointerId:32,type:'pointerup'});
+ if(Math.abs(mapGame.cam.x+mapGame.vw/2-mapGame.W*0.7)>1||Math.abs(mapGame.cam.y+mapGame.vh/2-mapGame.H*0.65)>1){ errors.push('minimap drag did not track the selected world position'); mapOk=false; }
+ console.log('minimap click + drag coordinates: '+(mapOk?'OK':'FAIL'));
  const friendly=pg.units.filter(u=>u.team===0),minX=Math.min(...friendly.map(u=>u.x)),maxX=Math.max(...friendly.map(u=>u.x));
  const minY=Math.min(...friendly.map(u=>u.y)),maxY=Math.max(...friendly.map(u=>u.y));
  pg.zoom=1; pg.cam={x:minX-1,y:minY-1};
